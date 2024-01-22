@@ -301,57 +301,15 @@ def load_radius_graphs(
 
 
 def get_3tuple(ids, images, coords_in_cell, matrix):
-    # 参数：
-    #       晶胞内节点数量为N,第i个节点的邻居数量为M_i
-    #       ids：邻居节点在晶胞内的下标，一个N*M_i维list。按照距离由近到远排好序[[5 3 4 7 1 0 1 0 8 6 6 8 2 9 9 4 3 2 2 2]...]
-    #       images：邻居节点所在的晶胞，与上面的ids对应，N*M_i*3维list，[
-    #       [[ 0.  0.  0.]
-    #  [ 0. -1.  0.]
-    #  [ 0.  0.  0.]
-    #  [ 0. -1.  0.]
-    #  [ 1.  0.  0.]
-    #  [ 0.  0.  0.]
-    #  [ 1.  0.  1.]
-    #  [ 0.  0.  1.]
-    #  [ 1.  0.  0.]
-    #  [ 0. -1.  0.]
-    #  [ 0.  0.  0.]
-    #  [ 0.  0.  0.]
-    #  [ 1.  0.  0.]
-    #  [ 0.  0.  1.]
-    #  [ 0.  0. -1.]
-    #  [ 1.  0.  0.]
-    #  [ 0.  0.  0.]
-    #  [ 1. -1.  0.]
-    #  [ 0.  0.  0.]
-    #  [ 0. -1.  0.]]
-    #  ....................]
-    #       coords_in_cell:节点在晶胞内的坐标,N*3
-    #       matrix：晶格的三维坐标,3*3
-    #print('running in get_3tuple....')
-    # 所有节点的最近邻居和第二近邻居
-    n0_index = list(map(lambda item: item[0], ids))  # 所有节点最近邻居组成的一个N维的一维数组
-    # print('n0_index:')
-    # print(len(n0_index))
-    # print(n0_index)
-    n0_image = list(map(lambda item: item[0], images))   # N*3的二维数组
-    # print('n0_image:')
-    # print(len(n0_image))
-    # print(n0_image)
-    n1_index = list(map(lambda item: item[1], ids))  # 第二近邻居
-    # print('n1_index:')
-    # print(len(n1_index))
-    # print(n1_index)
-    n1_image = list(map(lambda item: item[1], images))  # N*3的二维数组
-    # print('n1_image:')
-    # print(len(n1_image))
-    # print(n1_image)
-    # 根据索引，需要计算的坐标有五个：其中，节点j为起点，节点i为终点
-    # ①pos_ij:节点j的坐标减去节点i的坐标
-    # ②pos_ino:距离节点i最近的点减去节点i的坐标，不判断该点是不是j
-    # ③pos_in1:距离节点i第二近的点减去节点i的坐标，不判断该点是不是j
-    # ④pos_iref:除了j节点之外距离节点i最近的点减去节点i的坐标
-    # ⑤pos_jref_j：除了i节点之外距离节点j最近的点减去节点j的坐标
+
+    n0_index = list(map(lambda item: item[0], ids))
+
+    n0_image = list(map(lambda item: item[0], images))
+
+    n1_index = list(map(lambda item: item[1], ids))
+
+    n1_image = list(map(lambda item: item[1], images))
+
     all_pos_ij = []
     all_pos_in0 = []
     all_pos_in1 = []
@@ -359,100 +317,62 @@ def get_3tuple(ids, images, coords_in_cell, matrix):
     all_pos_jref_j = []
     tuple_u = []
     tuple_v = []
-    # i是晶胞内所有节点
+
     for i in range(len(ids)):
-        # j是节点i的所有邻居节点
-        # print('first iteration....')
-        # print(i)
-        pos_i = coords_in_cell[i]  # 节点i的坐标
-        # print('position i:')
-        # print(pos_i)
-        # 求最近邻坐标
-        # print('nearest:')
-        n0_index_incell_i = n0_index[i]  # 节点i的最近邻居n0在晶胞内的索引
+
+        pos_i = coords_in_cell[i]
+
+        n0_index_incell_i = n0_index[i]
         # print(n0_index_incell_i)
-        n0_image_i = n0_image[i]  # 节点i的最近邻居n0所在的晶胞
+        n0_image_i = n0_image[i]
         # print(n0_image_i)
         shifted = np.sum(matrix * n0_image_i[:, np.newaxis], axis=0)
-        pos_n0 = shifted + coords_in_cell[n0_index_incell_i]  # 节点i的最近邻居n0的坐标
+        pos_n0 = shifted + coords_in_cell[n0_index_incell_i]
         # print(pos_n0)
-        pos_in0 = pos_n0 - pos_i  # 向量i→n0
-        # print(pos_in0)
-        # 求第二近坐标
-        # print('second nearest:')
-        n1_index_incell_i = n1_index[i]  # 节点i的第二近邻居n1在晶胞内的索引
-        # print(n1_index_incell_i)
-        n1_image_i = n1_image[i]  # 节点i的第二近邻居n1所在的晶胞
+        pos_in0 = pos_n0 - pos_i
+        n1_index_incell_i = n1_index[i]
+        n1_image_i = n1_image[i]
         # print(n1_image_i)
         shifted = np.sum(matrix * n1_image_i[:, np.newaxis], axis=0)
-        pos_n1 = shifted + coords_in_cell[n1_index_incell_i]  # 节点i的第二近邻居n1的坐标
+        pos_n1 = shifted + coords_in_cell[n1_index_incell_i]
         # print(pos_n1)
-        pos_in1 = pos_n1 - pos_i  # 向量i→n1
+        pos_in1 = pos_n1 - pos_i
         # print(pos_in1)
 
         for index_j, j in enumerate(ids[i]):
             tuple_u.append(i)
             tuple_v.append(j)
-            # print('second iteration....')
-            # print(j)
-            # print(images[i][index_j])
-            # print(matrix)
-            # print(coords_in_cell[j])
             shifted = np.sum(matrix * images[i][index_j][:, np.newaxis], axis=0)
-            pos_j = shifted + coords_in_cell[j]  # 节点j的坐标
+            pos_j = shifted + coords_in_cell[j]
             # print('position j:')
             # print(pos_j)
-            pos_ij = pos_j - pos_i  # 向量i→j
-            if np.allclose(pos_ij, [0.0, 0.0, 0.0], rtol=1e-5):
-                print('error in ...')
-                print(i, index_j, j)
-                print('all neighbor of i')
-                print(ids[i])
-                print('position i and j')
-                print(pos_i, pos_j)
-                print('images for i')
-                print(images[i])
-                print('coords_in_cell[j]:')
-                print(coords_in_cell[j])
-                print('matrix')
-                print(matrix)
-                print('coord:')
-                print(images[i][index_j])
-                sys.exit()
-            # print('position ij')
-            # print(pos_ij)
+            pos_ij = pos_j - pos_i
             if j == n0_index_incell_i and np.allclose(images[i][index_j], n0_image_i, rtol=1e-5):
                 pos_iref = pos_in1
             else:
                 pos_iref = pos_in0
-            # print('pos_iref')
-            # print(pos_iref)
-            n0_index_incell_j = n0_index[j]  # 节点j的最近邻居n0j在晶胞内的索引
-            # print('n0_index_incell_j')
-            # print(n0_index_incell_j)
-            n0_image_j = n0_image[j] + images[i][index_j]  # 节点j的最近邻居n0j所在的晶胞
+
+            n0_index_incell_j = n0_index[j]
+
+            n0_image_j = n0_image[j] + images[i][index_j]
             # print('n0_image_j')
             # print(n0_image_j)
             shifted = np.sum(matrix * n0_image_j[:, np.newaxis], axis=0)
-            pos_n0j = shifted + coords_in_cell[n0_index_incell_j]  # 节点j的最近邻居n0j的坐标
+            pos_n0j = shifted + coords_in_cell[n0_index_incell_j]
             # print('pos_n0j')
             # print(pos_n0j)
-            pos_jn0 = pos_n0j - pos_j  # 向量j→n0
+            pos_jn0 = pos_n0j - pos_j
             # print('pos_jn0')
-            # print(pos_jn0)
-            # 求第二近坐标
-            n1_index_incell_j = n1_index[j]  # 节点j的第二近邻居n1j在晶胞内的索引
-            n1_image_j = n1_image[j] + images[i][index_j]  # 节点j的第二近邻居n1j所在的晶胞
-            shifted = np.sum(matrix * n1_image_j[:, np.newaxis], axis=0)
-            pos_n1j = shifted + coords_in_cell[n1_index_incell_j]  # 节点i的第二近邻居n1j的坐标
-            pos_jn1 = pos_n1j - pos_j  # 向量j→n1
 
+            n1_index_incell_j = n1_index[j]
+            n1_image_j = n1_image[j] + images[i][index_j]
+            shifted = np.sum(matrix * n1_image_j[:, np.newaxis], axis=0)
+            pos_n1j = shifted + coords_in_cell[n1_index_incell_j]
+            pos_jn1 = pos_n1j - pos_j
             if i == n0_index_incell_j and np.allclose(n0_image_j, [0.0, 0.0, 0.0], rtol=1e-5):
                 pos_jref = pos_jn1
             else:
                 pos_jref = pos_jn0
-            # print('pos_jref')
-            # print(pos_jref)
 
             all_pos_ij.append(pos_ij)
             all_pos_in0.append(pos_in0)
@@ -463,38 +383,29 @@ def get_3tuple(ids, images, coords_in_cell, matrix):
     # print('all position:')
     all_pos_ij = torch.tensor(all_pos_ij)
     # print('all_pos_ij')
-    # print(all_pos_ij.size())  # (N*M_i)*3维
+    # print(all_pos_ij.size())  # (N*M_i)*3
     # print(all_pos_ij)
     all_pos_in0 = torch.tensor(all_pos_in0)
     # print('all_pos_in0')
-    # print(all_pos_in0.size())  # (N*M_i)*3维
+    # print(all_pos_in0.size())  # (N*M_i)*3
     # print(all_pos_in0)
     all_pos_in1 = torch.tensor(all_pos_in1)
     # print('all_pos_in1')
-    # print(all_pos_in1.size())  # (N*M_i)*3维
+    # print(all_pos_in1.size())  # (N*M_i)*3
     # print(all_pos_in1)
     all_pos_iref = torch.tensor(all_pos_iref)
     # print('all_pos_iref')
-    # print(all_pos_iref.size())  # (N*M_i)*3维
+    # print(all_pos_iref.size())  # (N*M_i)*3
     # print(all_pos_iref)
     all_pos_jref_j = torch.tensor(all_pos_jref_j)
-    # print('all_pos_jref_j')
-    # print(all_pos_jref_j.size())  # (N*M_i)*3维
-    # print(all_pos_jref_j)
 
-    # Calculate angles.
-    # print('calculating theta..........')
     a = (all_pos_ij * all_pos_in0).sum(dim=-1)
     b = torch.cross(all_pos_ij, all_pos_in0).norm(dim=-1)
     theta = torch.atan2(b, a)
     theta[theta < 0] = theta[theta < 0] + math.pi
     theta[theta < 1e-5] = 0.0
-    # print('theta calculated..........')
 
-    # Calculate torsions.
-    # print('calculating phi')
     dist_in0 = all_pos_in0.pow(2).sum(dim=-1).sqrt()
-    # dist_ji = pos_ji.pow(2).sum(dim=-1).sqrt()
     plane1 = torch.cross(all_pos_ij, all_pos_in0)
     plane2 = torch.cross(all_pos_in0, all_pos_in1)
     # plane2 = torch.cross(-pos_ji, pos_in1)
@@ -504,10 +415,7 @@ def get_3tuple(ids, images, coords_in_cell, matrix):
     phi = torch.atan2(b, a)
     phi[phi < 0] = phi[phi < 0] + math.pi
     phi[phi < 1e-5] = 0.0
-    # print('phi calculated..........')
 
-    # Calculate right torsions.
-    # print('calculating tau..........')
     dist_ji = all_pos_ij.pow(2).sum(dim=-1).sqrt()
     plane1 = torch.cross(all_pos_ij, all_pos_jref_j)
     plane2 = torch.cross(all_pos_ij, all_pos_iref)
@@ -526,12 +434,6 @@ def get_3tuple(ids, images, coords_in_cell, matrix):
     theta = theta.to(torch.float32)
     phi = phi.to(torch.float32)
     tau = tau.to(torch.float32)
-    # print(tuple_u)
-    # print(tuple_v)
-    # print(dist)
-    # print(theta)
-    # print(phi)
-    # print(tau)
     return tuple_u, tuple_v, dist, theta, phi, tau
 
 
