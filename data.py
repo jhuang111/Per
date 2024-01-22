@@ -536,48 +536,19 @@ def get_3tuple(ids, images, coords_in_cell, matrix):
 
 
 def get_new_3tuple(ids, images, coords_in_cell, matrix):
-    # 参数：
-    #       晶胞内节点数量为N,第i个节点的邻居数量为M_i
-    #       ids：邻居节点在晶胞内的下标，一个N*M_i维list。按照距离由近到远排好序[[5 3 4 7 1 0 1 0 8 6 6 8 2 9 9 4 3 2 2 2]...]
-    #       images：邻居节点所在的晶胞，与上面的ids对应，N*M_i*3维list，[
-    #       [[ 0.  0.  0.]
-    #  [ 0. -1.  0.]
-    #  [ 0.  0.  0.]
-    #  [ 0. -1.  0.]
-    #  [ 1.  0.  0.]
-    #  [ 0.  0.  0.]
-    #  [ 1.  0.  1.]
-    #  [ 0.  0.  1.]
-    #  [ 1.  0.  0.]
-    #  [ 0. -1.  0.]
-    #  [ 0.  0.  0.]
-    #  [ 0.  0.  0.]
-    #  [ 1.  0.  0.]
-    #  [ 0.  0.  1.]
-    #  [ 0.  0. -1.]
-    #  [ 1.  0.  0.]
-    #  [ 0.  0.  0.]
-    #  [ 1. -1.  0.]
-    #  [ 0.  0.  0.]
-    #  [ 0. -1.  0.]]
-    #  ....................]
-    #       coords_in_cell:节点在晶胞内的坐标,N*3
-    #       matrix：晶格的三维坐标,3*3
-    # print('running in get_3tuple....')
-    # 所有节点的最近邻居和第二近邻居
-    n0_index = list(map(lambda item: item[0], ids))  # 所有节点最近邻居组成的一个N维的一维数组
+    n0_index = list(map(lambda item: item[0], ids))
     # print('n0_index:')
     # print(len(n0_index))
     # print(n0_index)
-    n0_image = list(map(lambda item: item[0], images))   # N*3的二维数组
+    n0_image = list(map(lambda item: item[0], images))
     # print('n0_image:')
     # print(len(n0_image))
     # print(n0_image)
-    n1_index = list(map(lambda item: item[1], ids))  # 第二近邻居
+    n1_index = list(map(lambda item: item[1], ids))
     # print('n1_index:')
     # print(len(n1_index))
     # print(n1_index)
-    n1_image = list(map(lambda item: item[1], images))  # N*3的二维数组
+    n1_image = list(map(lambda item: item[1], images))
     all_pos_ij = []
     all_pos_in0 = []
     all_pos_in1 = []
@@ -585,88 +556,47 @@ def get_new_3tuple(ids, images, coords_in_cell, matrix):
     all_pos_jn1 = []
     tuple_u = []
     tuple_v = []
-    # i是晶胞内所有节点
     for i in range(len(ids)):
-        # j是节点i的所有邻居节点
-        # print('first iteration....')
-        # print(i)
-        pos_i = coords_in_cell[i]  # 节点i的坐标
-        # print('position i:')
-        # print(pos_i)
-        # 求最近邻坐标
-        # print('nearest:')
-        n0_index_incell_i = n0_index[i]  # 节点i的最近邻居n0在晶胞内的索引
-        # print(n0_index_incell_i)
-        n0_image_i = n0_image[i]  # 节点i的最近邻居n0所在的晶胞
+
+        pos_i = coords_in_cell[i]
+
+        n0_index_incell_i = n0_index[i]
+        n0_image_i = n0_image[i]
         # print(n0_image_i)
         shifted = np.sum(matrix * n0_image_i[:, np.newaxis], axis=0)
-        pos_n0 = shifted + coords_in_cell[n0_index_incell_i]  # 节点i的最近邻居n0的坐标
+        pos_n0 = shifted + coords_in_cell[n0_index_incell_i]
         # print(pos_n0)
-        pos_in0 = pos_n0 - pos_i  # 向量i→n0
+        pos_in0 = pos_n0 - pos_i
         # print(pos_in0)
-        # 求第二近坐标
-        # print('second nearest:')
-        n1_index_incell_i = n1_index[i]  # 节点i的第二近邻居n1在晶胞内的索引
+        n1_index_incell_i = n1_index[i]
         # print(n1_index_incell_i)
-        n1_image_i = n1_image[i]  # 节点i的第二近邻居n1所在的晶胞
+        n1_image_i = n1_image[i]
         # print(n1_image_i)
         shifted = np.sum(matrix * n1_image_i[:, np.newaxis], axis=0)
-        pos_n1 = shifted + coords_in_cell[n1_index_incell_i]  # 节点i的第二近邻居n1的坐标
-        # print(pos_n1)
-        pos_in1 = pos_n1 - pos_i  # 向量i→n1
-        # print(pos_in1)
-
+        pos_n1 = shifted + coords_in_cell[n1_index_incell_i]
+        pos_in1 = pos_n1 - pos_i
         for index_j, j in enumerate(ids[i]):
             tuple_u.append(i)
             tuple_v.append(j)
-            # print('second iteration....')
-            # print(j)
-            # print(images[i][index_j])
-            # print(matrix)
-            # print(coords_in_cell[j])
             shifted = np.sum(matrix * images[i][index_j][:, np.newaxis], axis=0)
-            pos_j = shifted + coords_in_cell[j]  # 节点j的坐标
-            # print('position j:')
-            # print(pos_j)
-            pos_ij = pos_j - pos_i  # 向量i→j
-            if np.allclose(pos_ij, [0.0, 0.0, 0.0], rtol=1e-5):
-                print('error in ...')
-                print(i, index_j, j)
-                print('all neighbor of i')
-                print(ids[i])
-                print('position i and j')
-                print(pos_i, pos_j)
-                print('images for i')
-                print(images[i])
-                print('coords_in_cell[j]:')
-                print(coords_in_cell[j])
-                print('matrix')
-                print(matrix)
-                print('coord:')
-                print(images[i][index_j])
-                sys.exit()
-            # print('position ij')
-            # print(pos_ij)
-            n0_index_incell_j = n0_index[j]  # 节点j的最近邻居n0j在晶胞内的索引
-            # print('n0_index_incell_j')
-            # print(n0_index_incell_j)
-            n0_image_j = n0_image[j] + images[i][index_j]  # 节点j的最近邻居n0j所在的晶胞
-            # print('n0_image_j')
-            # print(n0_image_j)
+            pos_j = shifted + coords_in_cell[j]
+            pos_ij = pos_j - pos_i
+            n0_index_incell_j = n0_index[j]
+
+            n0_image_j = n0_image[j] + images[i][index_j]
+
             shifted = np.sum(matrix * n0_image_j[:, np.newaxis], axis=0)
-            pos_n0j = shifted + coords_in_cell[n0_index_incell_j]  # 节点j的最近邻居n0j的坐标
+            pos_n0j = shifted + coords_in_cell[n0_index_incell_j]
             # print('pos_n0j')
             # print(pos_n0j)
-            pos_jn0 = pos_n0j - pos_j  # 向量j→n0
+            pos_jn0 = pos_n0j - pos_j
             # print('pos_jn0')
             # print(pos_jn0)
-            # 求第二近坐标
-            n1_index_incell_j = n1_index[j]  # 节点j的第二近邻居n1j在晶胞内的索引
-            n1_image_j = n1_image[j] + images[i][index_j]  # 节点j的第二近邻居n1j所在的晶胞
+            n1_index_incell_j = n1_index[j]
+            n1_image_j = n1_image[j] + images[i][index_j]
             shifted = np.sum(matrix * n1_image_j[:, np.newaxis], axis=0)
-            pos_n1j = shifted + coords_in_cell[n1_index_incell_j]  # 节点i的第二近邻居n1j的坐标
-            pos_jn1 = pos_n1j - pos_j  # 向量j→n1
-
+            pos_n1j = shifted + coords_in_cell[n1_index_incell_j]
+            pos_jn1 = pos_n1j - pos_j
             all_pos_ij.append(pos_ij)
             all_pos_in0.append(pos_in0)
             all_pos_in1.append(pos_in1)
@@ -675,58 +605,34 @@ def get_new_3tuple(ids, images, coords_in_cell, matrix):
 
     # print('all position:')
     all_pos_ij = torch.tensor(all_pos_ij)
-    # print('all_pos_ij')
-    # print(all_pos_ij.size())  # (N*M_i)*3维
-    # print(all_pos_ij)
     all_pos_in0 = torch.tensor(all_pos_in0)
-    # print('all_pos_in0')
-    # print(all_pos_in0.size())  # (N*M_i)*3维
-    # print(all_pos_in0)
-    all_pos_in1 = torch.tensor(all_pos_in1)
-    # print('all_pos_in1')
-    # print(all_pos_in1.size())  # (N*M_i)*3维
-    # print(all_pos_in1)
-    all_pos_jn0 = torch.tensor(all_pos_jn0)
-    # print('all_pos_iref')
-    # print(all_pos_iref.size())  # (N*M_i)*3维
-    # print(all_pos_iref)
-    all_pos_jn1 = torch.tensor(all_pos_jn1)
-    # print('all_pos_jref_j')
-    # print(all_pos_jref_j.size())  # (N*M_i)*3维
-    # print(all_pos_jref_j)
 
-    # Calculate angles.
-    # print('calculating theta..........')
+    all_pos_in1 = torch.tensor(all_pos_in1)
+    all_pos_jn0 = torch.tensor(all_pos_jn0)
+
+    all_pos_jn1 = torch.tensor(all_pos_jn1)
+
     a = (all_pos_ij * all_pos_in0).sum(dim=-1)
     b = torch.cross(all_pos_ij, all_pos_in0).norm(dim=-1)
     theta1 = torch.atan2(b, a)
     theta1[theta1 < 0] = theta1[theta1 < 0] + math.pi
     theta1[theta1 < 1e-5] = 0.0
-    # print('theta calculated..........')
-    # print('calculating theta..........')
+
     a = (all_pos_ij * all_pos_in1).sum(dim=-1)
     b = torch.cross(all_pos_ij, all_pos_in1).norm(dim=-1)
     theta2 = torch.atan2(b, a)
     theta2[theta2 < 0] = theta2[theta2 < 0] + math.pi
     theta2[theta2 < 1e-5] = 0.0
-    # print('theta calculated..........')
-    # print('calculating theta..........')
     a = (-all_pos_ij * all_pos_jn0).sum(dim=-1)
     b = torch.cross(-all_pos_ij, all_pos_jn0).norm(dim=-1)
     theta3 = torch.atan2(b, a)
     theta3[theta3 < 0] = theta3[theta3 < 0] + math.pi
     theta3[theta3 < 1e-5] = 0.0
-    # print('theta calculated..........')
-    # print('calculating theta..........')
     a = (-all_pos_ij * all_pos_jn1).sum(dim=-1)
     b = torch.cross(-all_pos_ij, all_pos_jn1).norm(dim=-1)
     theta4 = torch.atan2(b, a)
     theta4[theta4 < 0] = theta4[theta4 < 0] + math.pi
     theta4[theta4 < 1e-5] = 0.0
-    # print('theta calculated..........')
-
-    # Calculate torsions.
-    # print('calculating phi')
     dist_in0 = all_pos_in0.pow(2).sum(dim=-1).sqrt()
     # dist_ji = pos_ji.pow(2).sum(dim=-1).sqrt()
     plane1 = torch.cross(all_pos_ij, all_pos_in0)
@@ -738,10 +644,7 @@ def get_new_3tuple(ids, images, coords_in_cell, matrix):
     phi = torch.atan2(b, a)
     phi[phi < 0] = phi[phi < 0] + math.pi
     phi[phi < 1e-5] = 0.0
-    # print('phi calculated..........')
 
-    # Calculate right torsions.
-    # print('calculating tau..........')
     dist_ji = all_pos_ij.pow(2).sum(dim=-1).sqrt()
     plane1 = torch.cross(all_pos_ij, all_pos_in0)
     plane2 = torch.cross(all_pos_ij, all_pos_jn0)
@@ -750,8 +653,7 @@ def get_new_3tuple(ids, images, coords_in_cell, matrix):
     tau1 = torch.atan2(b, a)
     tau1[tau1 < 0] = tau1[tau1 < 0] + math.pi
     tau1[tau1 < 1e-5] = 0.0
-    # print('tau calculated..........')
-    # print('calculating tau..........')
+
     dist_ji = all_pos_ij.pow(2).sum(dim=-1).sqrt()
     plane1 = torch.cross(all_pos_ij, all_pos_in0)
     plane2 = torch.cross(all_pos_ij, all_pos_jn1)
@@ -760,8 +662,7 @@ def get_new_3tuple(ids, images, coords_in_cell, matrix):
     tau2 = torch.atan2(b, a)
     tau2[tau2 < 0] = tau2[tau2 < 0] + math.pi
     tau2[tau2 < 1e-5] = 0.0
-    # print('tau calculated..........')
-    # print('calculating tau..........')
+
     dist_ji = all_pos_ij.pow(2).sum(dim=-1).sqrt()
     plane1 = torch.cross(all_pos_ij, all_pos_in1)
     plane2 = torch.cross(all_pos_ij, all_pos_jn0)
@@ -796,12 +697,6 @@ def get_new_3tuple(ids, images, coords_in_cell, matrix):
     theta = theta.to(torch.float32)
     phi = phi.to(torch.float32)
     tau = tau.to(torch.float32)
-    # print(tuple_u)
-    # print(tuple_v)
-    # print(dist)
-    # print(theta)
-    # print(phi)
-    # print(tau)
     return tuple_u, tuple_v, dist, theta, phi, tau
 
 def load_infinite_graphs(
@@ -813,120 +708,6 @@ def load_infinite_graphs(
         infinite_params=[],
         R=5,
 ):
-    def get_4_tuple(pos, new_cutoff):
-        num_nodes = len(pos)
-
-        edge_index = radius_graph(pos, r=new_cutoff)
-        j, i = edge_index
-        if len(j) == 0:
-            edge_index = torch.tensor([[0], [0]]).to(torch.int64)
-            dist = torch.tensor([0])
-            theta = torch.tensor([0])
-            phi = torch.tensor([0])
-            tau = torch.tensor([0])
-            return edge_index, dist, theta, phi, tau
-        if len(j) == 1 or 2:
-            edge_index = torch.tensor([[0], [1]]).to(torch.int64)
-            vec = pos[1] - pos[0]
-            dist = vec.norm(dim=-1)
-            dist = torch.tensor(dist)
-            theta = torch.tensor([0])
-            phi = torch.tensor([0])
-            tau = torch.tensor([0])
-            return edge_index, dist, theta, phi, tau
-        vecs = pos[j] - pos[i]
-        dist = vecs.norm(dim=-1)
-
-        # Embedding block.
-        # x = self.emb(z)
-
-        # Calculate distances.
-        _, argmin0 = scatter_min(dist, i, dim_size=num_nodes)
-        argmin0[argmin0 >= len(i)] = 0
-        n0 = j[argmin0]
-        add = torch.zeros_like(dist).to(dist.device)
-        add[argmin0] = new_cutoff
-        dist1 = dist + add
-
-        _, argmin1 = scatter_min(dist1, i, dim_size=num_nodes)
-        argmin1[argmin1 >= len(i)] = 0
-        n1 = j[argmin1]
-        # --------------------------------------------------------
-
-        _, argmin0_j = scatter_min(dist, j, dim_size=num_nodes)
-        argmin0_j[argmin0_j >= len(j)] = 0
-        n0_j = i[argmin0_j]
-
-        add_j = torch.zeros_like(dist).to(dist.device)
-        add_j[argmin0_j] = new_cutoff
-        dist1_j = dist + add_j
-
-        # i[argmin] = range(0, num_nodes)
-        _, argmin1_j = scatter_min(dist1_j, j, dim_size=num_nodes)
-        argmin1_j[argmin1_j >= len(j)] = 0
-        n1_j = i[argmin1_j]
-
-        # ----------------------------------------------------------
-
-        # n0, n1 for i
-        n0 = n0[i]
-        n1 = n1[i]
-
-        # n0, n1 for j
-        n0_j = n0_j[j]
-        n1_j = n1_j[j]
-
-        # tau: (iref, i, j, jref)
-        # when compute tau, do not use n0, n0_j as ref for i and j,
-        # because if n0 = j, or n0_j = i, the computed tau is zero
-        # so if n0 = j, we choose iref = n1
-        # if n0_j = i, we choose jref = n1_j
-        mask_iref = n0 == j
-        iref = torch.clone(n0)
-        iref[mask_iref] = n1[mask_iref]
-        idx_iref = argmin0[i]
-        idx_iref[mask_iref] = argmin1[i][mask_iref]
-
-        mask_jref = n0_j == i
-        jref = torch.clone(n0_j)
-        jref[mask_jref] = n1_j[mask_jref]
-        idx_jref = argmin0_j[j]
-        idx_jref[mask_jref] = argmin1_j[j][mask_jref]
-
-        pos_ji, pos_in0, pos_in1, pos_iref, pos_jref_j = (
-            vecs,
-            vecs[argmin0][i],
-            vecs[argmin1][i],
-            vecs[idx_iref],
-            vecs[idx_jref]
-        )
-
-        # Calculate angles.
-        a = ((-pos_ji) * pos_in0).sum(dim=-1)
-        b = torch.cross(-pos_ji, pos_in0).norm(dim=-1)
-        theta = torch.atan2(b, a)
-        theta[theta < 0] = theta[theta < 0] + math.pi
-
-        # Calculate torsions.
-        dist_ji = pos_ji.pow(2).sum(dim=-1).sqrt()
-        plane1 = torch.cross(-pos_ji, pos_in0)
-        plane2 = torch.cross(-pos_ji, pos_in1)
-        a = (plane1 * plane2).sum(dim=-1)  # cos_angle * |plane1| * |plane2|
-        b = (torch.cross(plane1, plane2) * pos_ji).sum(dim=-1) / dist_ji
-        phi = torch.atan2(b, a)
-        phi[phi < 0] = phi[phi < 0] + math.pi
-
-        # Calculate right torsions.
-        plane1 = torch.cross(pos_ji, pos_jref_j)
-        plane2 = torch.cross(pos_ji, pos_iref)
-        a = (plane1 * plane2).sum(dim=-1)  # cos_angle * |plane1| * |plane2|
-        b = (torch.cross(plane1, plane2) * pos_ji).sum(dim=-1) / dist_ji
-        tau = torch.atan2(b, a)
-        tau[tau < 0] = tau[tau < 0] + math.pi
-
-        edge_index = edge_index.to(torch.int64)
-        return edge_index, dist, theta, phi, tau
-
     def atoms_to_graph(atoms):
         """Convert structure dict to DGLGraph."""
         structure = Atoms.from_dict(atoms)
@@ -960,13 +741,10 @@ def load_infinite_graphs(
         u, v, r = build_undirected_edgedata(atoms=structure, edges=edges)
         flag_unique = False
         if flag_unique:
-            # 将 u, v, r 按照维度 0 连接成一个新的 tensor
             combined = torch.cat((u.unsqueeze(1), v.unsqueeze(1), r), dim=1)
 
-            # 对 combined 进行去重操作
             unique_combined, unique_indices = torch.unique(combined, dim=0, return_inverse=True)
 
-            # 将去重后的 tensor 拆分回 u, v, r
             unique_u = unique_combined[:, 0]
             unique_v = unique_combined[:, 1]
             unique_r = unique_combined[:, 2:]
@@ -978,28 +756,8 @@ def load_infinite_graphs(
             v = v.to(torch.int64)
             r = r.to(torch.float32)
 
-        # cart_coords_tensor = torch.tensor(structure.cart_coords)
-        # r_cutoff = 4.0
-        # period_u, period_v = radius_graph(cart_coords_tensor, r=r_cutoff, batch=None, loop=False)
-        # u = period_u.to(torch.int64)
-        # v = period_v.to(torch.int64)
-        # r = cart_coords_tensor[period_u] - cart_coords_tensor[period_v]
         coords_in_cell = structure.cart_coords
         matrix = np.array(structure.lattice_mat)
-        # matrix = np.sum(matrix, axis=0)
-        # print('before 3tuple.........')
-        # print('index:')
-        # print(len(all_index))
-        # print(all_index)
-        # print('all_images:')
-        # print(len(all_images))
-        # print(all_images)
-        # print('coords_in_cell:')
-        # print(len(coords_in_cell))
-        # print(coords_in_cell)
-        # print('matrix:')
-        # print(len(matrix))
-        # print(matrix)
         tuple_u, tuple_v, dist, theta, phi, tau = get_new_3tuple(all_index, all_images, coords_in_cell, matrix)
         # tuple_edge_index, dist, theta, phi, tau = get_4_tuple(structure.cart_coords, new_cutoff=4.0)
         # print(test done)
@@ -1019,16 +777,6 @@ def load_infinite_graphs(
     else:
         #graphs = df["atoms"].progress_apply(atoms_to_graph).values
         graphs = df["atoms"].parallel_apply(atoms_to_graph).values
-        # from multiprocessing import Pool
-        # with Pool(processes=8) as pool:  # Number of processes to run in parallel
-        #     graphs = pool.map(atoms_to_graph, df["atoms"])
-        #graphs = []
-        #for atoms in df["atoms"]:
-        #    try:
-        #        graph = atoms_to_graph(atoms)
-        #        graphs.append(graph)
-        #    except Exception:
-        #        continue
         torch.save(graphs, cachefile)
 
 
@@ -1250,25 +998,6 @@ def get_train_val_loaders(
         dataset_train = [dat[x] for x in id_train]
         dataset_val = [dat[x] for x in id_val]
         dataset_test = [dat[x] for x in id_test]
-    # import pickle as pk
-    # print('using mp bulk dataset')
-    # with open('bulk/bulk-modulus_train.pkl', 'rb') as f:
-    #     dataset_train = pk.load(f)
-    # with open('bulk/bulk-modulus_val.pkl', 'rb') as f:
-    #     dataset_val = pk.load(f)
-    # with open('bulk/bulk-modulus_test.pkl', 'rb') as f:
-    #     dataset_test = pk.load(f)
-    #
-    # target = 'bulk modulus'
-
-    # print('using mp shear dataset')
-    # with open('shear/shear-modulus_train.pkl', 'rb') as f:
-    #     dataset_train = pk.load(f)
-    # with open('shear/shear-modulus_val.pkl', 'rb') as f:
-    #     dataset_val = pk.load(f)
-    # with open('shear/shear-modulus_test.pkl', 'rb') as f:
-    #     dataset_test = pk.load(f)
-    # target = 'shear modulus'
 
     start = time.time()
     train_data = get_torch_dataset(
