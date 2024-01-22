@@ -256,7 +256,6 @@ class PerCNetConv(MessagePassing):
         # result_o = self.bn(out)
         # print('out:')
         # print(out)
-        # TODO: ComeENet与PerCNet的结果如何进行处理？
         return torch.relu(x + self.bn(out))
         # return torch.relu(x + result_o)
 
@@ -352,135 +351,28 @@ class PerCNet(nn.Module):
         self.act = swish
         self.fc_out = nn.Linear(config.output_dim, config.output_features)
 
-    # TODO:
-    #  ②修改网络输入：PerCNet的输入需要加入TBF与SBF
-    #  ③修改网络：1.需要全局卷积和局部卷积对tbf和sbf进行处理；2.每个交互层结束后需要将周期节点进行节点特征一致性处理
     def forward(self, data, print_data=False):
-        # 周期同化，这里假定每两个节点都是周期节点，直接取平均
-        def period_come1(x, feature1, feature2, edge_index, batch):
-            x = self.act(self.lin(x))
-            feature1 = self.lin_feature1(feature1)
-            h1 = self.conv1(x, edge_index, feature1)
-            h1 = self.lin1(h1)
-            h1 = self.act(h1)
-
-            feature2 = self.lin_feature2(feature2)
-            h2 = self.conv2(x, edge_index, feature2)
-            h2 = self.lin2(h2)
-            h2 = self.act(h2)
-
-            h = self.lin_cat(torch.cat([h1, h2], 1))
-
-            h = h + x
-            for lin in self.lins:
-                h = self.act(lin(h)) + h
-            h = self.norm(h, batch)
-            h = self.final(h)
-            return h
-
-        def period_come2(x, feature1, feature2, edge_index, batch):
-            x = self.act(self.lin(x))
-            feature1 = self.lin_feature1(feature1)
-            h1 = self.conv1(x, edge_index, feature1)
-            h1 = self.lin1(h1)
-            h1 = self.act(h1)
-
-            feature2 = self.lin_feature2(feature2)
-            h2 = self.conv2(x, edge_index, feature2)
-            h2 = self.lin2(h2)
-            h2 = self.act(h2)
-
-            h = self.lin_cat(torch.cat([h1, h2], 1))
-
-            h = h + x
-            for lin in self.lins:
-                h = self.act(lin(h)) + h
-            h = self.norm(h, batch)
-            h = self.final(h)
-            return h
-
-        def period_come3(x, feature1, feature2, edge_index, batch):
-            x = self.act(self.lin(x))
-            feature1 = self.lin_feature1(feature1)
-            h1 = self.conv1(x, edge_index, feature1)
-            h1 = self.lin1(h1)
-            h1 = self.act(h1)
-
-            feature2 = self.lin_feature2(feature2)
-            h2 = self.conv2(x, edge_index, feature2)
-            h2 = self.lin2(h2)
-            h2 = self.act(h2)
-
-            h = self.lin_cat(torch.cat([h1, h2], 1))
-
-            h = h + x
-            for lin in self.lins:
-                h = self.act(lin(h)) + h
-            h = self.norm(h, batch)
-            h = self.final(h)
-            return h
-
-        def period_come4(x, feature1, feature2, edge_index, batch):
-            x = self.act(self.lin(x))
-            feature1 = self.lin_feature1(feature1)
-            h1 = self.conv1(x, edge_index, feature1)
-            h1 = self.lin1(h1)
-            h1 = self.act(h1)
-
-            feature2 = self.lin_feature2(feature2)
-            h2 = self.conv2(x, edge_index, feature2)
-            h2 = self.lin2(h2)
-            h2 = self.act(h2)
-
-            h = self.lin_cat(torch.cat([h1, h2], 1))
-
-            h = h + x
-            for lin in self.lins:
-                h = self.act(lin(h)) + h
-            h = self.norm(h, batch)
-            h = self.final(h)
-            return h
-
-        def assi01(x):
-            updated_tmp = ((x[::2] + x[1::2]) / 2.0).to(torch.double).to(device)
-            updated_tmp = updated_tmp.to(device)
-            x[0::2] = updated_tmp.clone()
-            x[1::2] = updated_tmp.clone()
-            # x = x.to(torch.float32)
-            return x
-
         """CGCNN function mapping graph to outputs."""
 
         cal_inf = True
         cal_edge = True
         cal_4edge = True
-        use_ComENet = False
         if cal_edge:
             edge_index = data.edge_index.to(torch.int64)
-            # 固定边特征计算，使用RBF扩展的键长
             edge_attr = data.edge_attr.to(torch.float32)
             edge_features = self.edge_embedding(-0.75 / edge_attr)
-            # print('edge features:')
-            # print(edge_features)
-            # print(edge_features.size())
-        # print('edge features')
-        # print(edge_features)
-        # TODO:前面周期扩展会不会对该步造成影响？
         if cal_inf:
-            # 无限边索引
             inf_edge_index = data.inf_edge_index
-            # 计算无限边特征 potentials: [-0.801, -0.074, 0.145]。potentials有什么作用？？？
             inf_feat = sum([data.inf_edge_attr[:, i] * pot for i, pot in enumerate(self.config.potentials)])
-            # 对无限边特征做embedding和bn
             inf_edge_features = self.inf_edge_embedding(inf_feat)
             inf_edge_features = self.infinite_bn(F.softplus(self.infinite_linear(inf_edge_features)))
             # print('inf edge features')
             # print(inf_edge_features)
 
         # initial node features: atom feature network...
-        if self.config.charge_map:  # 原子特征与组信息拼接
+        if self.config.charge_map:
             node_features = self.atom_embedding(torch.cat([data.x, data.g_feats], -1))
-        else:  # 默认false
+        else:
             node_features = self.atom_embedding(data.x)
         if cal_4edge:
             # print(data.size())  # (1072, 1072)
@@ -490,60 +382,21 @@ class PerCNet(nn.Module):
             phi = data.phi
             TBF = self.feature1(dist, theta, phi)
             feature1 = self.lin_feature1(TBF)
-
-            #tau = data.tau
-            #SBF = self.feature2(dist, tau)
-            #feature2 = self.lin_feature2(SBF)
-
+            tau = data.tau
+            SBF = self.feature2(dist, tau)
+            feature2 = self.lin_feature2(SBF)
             tuple_index = data.tuple_edge_index
 
-        
-        if self.config.transformer:  # 默认False
-            edge_index = torch.cat([edge_index, inf_edge_index], 1)  # 拼接边索引
-            edge_features = torch.cat([edge_features, inf_edge_features], 0)  # 拼接边特征
-            tuple_edge_index = torch.cat([tuple_index, tuple_index], 1)  # 拼接边索引
-            tuple_edge_features = torch.cat([feature1, feature2], 0)  # 拼接边特征
-        else:    
-            # edge_index = torch.cat([edge_index, inf_edge_index, tuple_index, tuple_index], 1)  # 拼接边索引
-            # edge_features = torch.cat([edge_features, inf_edge_features, feature1, feature2], 0)  # 拼接边特征
-            # edge_index = torch.cat([edge_index, inf_edge_index], 1)  # 拼接边索引
-            # edge_features = torch.cat([edge_features, inf_edge_features], 0)  # 拼接边特征
-            # edge_index = torch.cat([edge_index, tuple_index], 1)  # 拼接边索引
-            # edge_features = torch.cat([edge_features, feature1], 0)  # 拼接边特征
-            pass
-        if use_ComENet:
-            node_features = period_come1(x=node_features, feature1=TBF, feature2=SBF, edge_index=tuple_index,
-                                         batch=data.batch)
-            node_features = period_come2(x=node_features, feature1=TBF, feature2=SBF, edge_index=tuple_index,
-                                         batch=data.batch)
-            node_features = period_come3(x=node_features, feature1=TBF, feature2=SBF, edge_index=tuple_index,
-                                         batch=data.batch)
-            node_features = period_come4(x=node_features, feature1=TBF, feature2=SBF, edge_index=tuple_index,
-                                         batch=data.batch)
-            node_features = assi01(node_features)
-            for lin in self.lins:
-                node_features = self.act(lin(node_features))
-            node_features = self.lin_out(node_features)
-
-            result = scatter(node_features, data.batch, dim=0)
-            return result
-        # PerCNet的处理方式：
+        edge_index = torch.cat([edge_index, inf_edge_index], 1)
+        edge_features = torch.cat([edge_features, inf_edge_features], 0)
+        tuple_edge_index = torch.cat([tuple_index, tuple_index], 1)
+        tuple_edge_features = torch.cat([feature1, feature2], 0)
         for i in range(self.config.conv_layers):
-            if self.config.transformer:  # 默认False
-                local_node_features = self.conv_layers[i](node_features, edge_index, edge_features)
-                inf_node_features = self.transformer_conv_layers[i](node_features, tuple_edge_index, tuple_edge_features)
-                node_features = local_node_features + inf_node_features
-                # node_features = self.transformer_conv_layers[i](node_features, tuple_edge_index, tuple_edge_features)
-            else:  # 默认执行，对节点特征进行卷积
-                # TODO: Ⅲ. ①对下面函数进行修改，添加参数TBF和SBF，网络中需要添加相应的卷积层
-                node_features = self.conv_layers[i](node_features, edge_index, edge_features)
-                # node_features = self.conv_layers[i](node_features, tuple_index, feature1)
-                # node_features_clone = node_features.clone()-
-                # node_features = assi01(node_features_clone)
-                # TODO: Ⅲ. ②交互模块每次结束对源节点和周期节点的node_features做一致性处理
-        # 全局池化
+            local_node_features = self.conv_layers[i](node_features, edge_index, edge_features)
+            inf_node_features = self.transformer_conv_layers[i](node_features, tuple_edge_index, tuple_edge_features)
+            node_features = local_node_features + inf_node_features
+
         features = global_mean_pool(node_features, data.batch)
-        # 接一个全连接层
         features = self.fc(features)
         result = torch.squeeze(self.fc_out(features))
 
